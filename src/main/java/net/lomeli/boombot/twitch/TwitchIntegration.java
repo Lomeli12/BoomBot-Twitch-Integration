@@ -41,7 +41,7 @@ public class TwitchIntegration {
     @BoomAddon.PostInit
     public void postInitAddon() {
         listenerThread = new Thread(channelListener = new ChannelListener());
-        listenerThread.run();
+        listenerThread.start();
     }
 
     private static void parseConfig() {
