@@ -22,7 +22,7 @@ archivesBaseName = config.archiveName
 version = config.releaseVersion
 
 dependencies {
-    compile "net.lomeli:BoomBot:1.0.0:dev"
+    compile "net.lomeli:BoomBot:${config.boombotVersion}:dev"
     compile "net.dv8tion:JDA:${config.jdaVersion}"
     compile "com.google.code.gson:gson:${config.gsonVersion}"
     compile "com.google.guava:guava:${config.guavaVersion}"
