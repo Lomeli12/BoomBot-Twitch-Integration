@@ -10,13 +10,13 @@ import java.io.File;
 import net.lomeli.boombot.api.BoomAddon;
 import net.lomeli.boombot.api.BoomBotAPI;
 import net.lomeli.boombot.commands.CommandRegistry;
-import net.lomeli.boombot.helper.Logger;
+import net.lomeli.boombot.logging.Logger;
 import net.lomeli.boombot.twitch.commands.AddChannelCommand;
 import net.lomeli.boombot.twitch.commands.RemoveChannelCommand;
 import net.lomeli.boombot.twitch.config.TwitchConfig;
 
 @BoomAddon(addonID = TwitchIntegration.ADDON_ID, name = TwitchIntegration.ADDON_NAME, version = TwitchIntegration.VERSION,
-        acceptedBoomBotVersion = "2.0.0")
+        acceptedBoomBotVersion = "2.1.0")
 public class TwitchIntegration {
     public static final String ADDON_ID = "boombot_twitch_integration";
     public static final String ADDON_NAME = "BoomBot Twitch Integration";
@@ -29,10 +29,14 @@ public class TwitchIntegration {
     public static Thread listenerThread;
     public static TwitchConfig config;
     public static ChannelListener channelListener;
+    public static Logger logger;
 
     @BoomAddon.Init
     public void initAddon() {
+        logger = new Logger(ADDON_NAME);
+        logger.info("Loading twitch integration configs");
         parseConfig();
+        logger.info("Finished loading twitch integration configs");
         CommandRegistry.INSTANCE.addNewCommand(new AddChannelCommand());
         CommandRegistry.INSTANCE.addNewCommand(new RemoveChannelCommand());
     }
@@ -48,6 +52,7 @@ public class TwitchIntegration {
             return;
         if (!CONFIG_FILE.exists()) {
             config = new TwitchConfig();
+            logger.info("No configs exists, creating empty config file.");
             writeConfig();
         }
         try {
@@ -56,7 +61,7 @@ public class TwitchIntegration {
             if (!Strings.isNullOrEmpty(data))
                 config = gson.fromJson(data, TwitchConfig.class);
         } catch (Exception e) {
-            Logger.error("Failed to read config file %s!", e, CONFIG_FILE.toString());
+            logger.error("Failed to read config file %s!", e, CONFIG_FILE.toString());
         }
     }
 
@@ -66,7 +71,7 @@ public class TwitchIntegration {
             String stuff = gson.toJson(config, TwitchConfig.class);
             FileUtils.write(CONFIG_FILE, stuff, "UTF-8");
         } catch (Exception e) {
-            Logger.error("Could not write to %s!", e, CONFIG_FILE.toString());
+            logger.error("Could not write to %s!", e, CONFIG_FILE.toString());
         }
     }
 }

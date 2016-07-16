@@ -17,6 +17,7 @@ import net.lomeli.boombot.twitch.config.Client;
 
 public class ChannelListener implements Runnable {
     private long time;
+    private boolean isChecking;
     private HashMap<String, List<String>> live;
 
     public ChannelListener() {
@@ -27,30 +28,35 @@ public class ChannelListener implements Runnable {
     @Override
     public void run() {
         while (true) {
-            if (System.currentTimeMillis() >= time + 15000) {
-                time = System.currentTimeMillis();
-                for (Map.Entry<String, List<Client>> entry : TwitchIntegration.config.getGuildClientList().entrySet()) {
-                    String guildId = entry.getKey();
-                    List<Client> registeredClients = entry.getValue();
-                    if (registeredClients != null && !registeredClients.isEmpty()) {
-                        registeredClients.stream().forEach(client -> {
-                            String channel = client.getChannelName();
-                            ChannelResponse response = isChannelStreaming(channel);
-                            if (response != null && response.streams.size() > 0) {
-                                Stream stream = response.getLiveStream();
-                                if (stream != null && !isCachedLive(guildId, channel)) {
-                                    cacheLive(guildId, channel);
-                                    Stream.ChannelInfo info = stream.channel;
-                                    BoomBotAPI.sendMessageToGuild(guildId,
-                                            "@everyone, <@%s> is NOW LIVE at https://www.twitch.tv/%s\nPlaying %s | %s | (%s)",
-                                            client.getUserID(), channel, info.game, info.status + (info.mature ? " [MATURE]" : ""),
-                                            info.broadcaster_language);
-                                }
-                            } else if (isCachedLive(guildId, channel))
-                                removeLive(guildId, channel);
-                        });
+            long currentTime = System.currentTimeMillis();
+            if (currentTime >= time + 15000) {
+                if (!isChecking) {
+                    for (Map.Entry<String, List<Client>> entry : TwitchIntegration.config.getGuildClientList().entrySet()) {
+                        isChecking = true;
+                        String guildId = entry.getKey();
+                        List<Client> registeredClients = entry.getValue();
+                        if (registeredClients != null && !registeredClients.isEmpty()) {
+                            registeredClients.stream().forEach(client -> {
+                                String channel = client.getChannelName();
+                                ChannelResponse response = isChannelStreaming(channel);
+                                if (response != null && response.streams.size() > 0) {
+                                    Stream stream = response.getLiveStream();
+                                    if (stream != null && !isCachedLive(guildId, channel)) {
+                                        cacheLive(guildId, channel);
+                                        Stream.ChannelInfo info = stream.channel;
+                                        BoomBotAPI.sendMessageToGuild(guildId,
+                                                "@everyone, <@%s> is NOW LIVE at https://www.twitch.tv/%s\nPlaying %s | %s | (%s)",
+                                                client.getUserID(), channel, info.game, info.status + (info.mature ? " [MATURE]" : ""),
+                                                info.broadcaster_language);
+                                    }
+                                } else if (isCachedLive(guildId, channel))
+                                    removeLive(guildId, channel);
+                            });
+                        }
                     }
+                    isChecking = false;
                 }
+                time = currentTime;
             }
         }
     }
